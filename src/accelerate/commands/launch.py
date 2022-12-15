@@ -539,7 +539,19 @@ def simple_launcher(args):
     current_env["ACCELERATE_DYNAMO_BACKEND"] = dynamo_backend.value
 
     current_env["OMP_NUM_THREADS"] = str(args.num_cpu_threads_per_process)
-
+    if args.use_fsdp:
+        current_env["ACCELERATE_USE_FSDP"] = "true"
+        current_env["FSDP_SHARDING_STRATEGY"] = str(args.fsdp_sharding_strategy)
+        current_env["FSDP_OFFLOAD_PARAMS"] = str(args.fsdp_offload_params).lower()
+        current_env["FSDP_MIN_NUM_PARAMS"] = str(args.fsdp_min_num_params)
+        if args.fsdp_auto_wrap_policy is not None:
+            current_env["FSDP_AUTO_WRAP_POLICY"] = str(args.fsdp_auto_wrap_policy)
+        if args.fsdp_transformer_layer_cls_to_wrap is not None:
+            current_env["FSDP_TRANSFORMER_CLS_TO_WRAP"] = str(args.fsdp_transformer_layer_cls_to_wrap)
+        if args.fsdp_backward_prefetch_policy is not None:
+            current_env["FSDP_BACKWARD_PREFETCH"] = str(args.fsdp_backward_prefetch_policy)
+        if args.fsdp_state_dict_type is not None:
+            current_env["FSDP_STATE_DICT_TYPE"] = str(args.fsdp_state_dict_type)
     process = subprocess.Popen(cmd, env=current_env)
     process.wait()
     if process.returncode != 0:
@@ -1058,7 +1070,7 @@ def launch_command(args):
     # Use the proper launcher
     if args.use_deepspeed and not args.cpu:
         deepspeed_launcher(args)
-    elif args.use_fsdp and not args.cpu:
+    elif args.use_fsdp and not args.cpu and not args.use_cpu:
         multi_gpu_launcher(args)
     elif args.use_megatron_lm and not args.cpu:
         multi_gpu_launcher(args)

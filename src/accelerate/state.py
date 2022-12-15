@@ -205,6 +205,11 @@ class AcceleratorState:
                 self.local_process_index = local_rank
                 self.device = torch.device("cpu")
                 self.mixed_precision = mixed_precision
+                if os.environ.get("ACCELERATE_USE_FSDP", "false") == "true":
+                    self.distributed_type = DistributedType.FSDP
+                    if self.mixed_precision != "no":
+                        fsdp_plugin.set_mixed_precision(self.mixed_precision)
+                    self.fsdp_plugin = fsdp_plugin
             else:
                 self.distributed_type = DistributedType.NO
                 self.num_processes = 1
